@@ -1,4 +1,4 @@
-#MEATER Link Python Plugin
+# MEATER Link Python Plugin
 #
 # Author: flopp999
 #
@@ -7,14 +7,6 @@
     <description>
         <h2>Support me with a coffee &<a href="https://www.buymeacoffee.com/flopp999">https://www.buymeacoffee.com/flopp999</a></h2><br/>
         <h2>https://meater.com/blog/with-meater-link-the-best-wireless-meat-thermometer-gets-even-better-thanks-to-wifi-connectivity/</h2>
-        <h3>Categories that will be fetched</h3>
-        <ul style="list-style-type:square">
-            <li>Charger State</li>
-            <li>Charger Config</li>
-        </ul>
-        <h3>Configuration</h3>
-        <h2></h2>
-        <h2></h2>
     </description>
     <params>
         <param field="Mode1" label="Email address" width="320px" required="true" default="user@mail.com"/>
@@ -72,8 +64,8 @@ class BasePlugin:
         self.FirstRun = True
 
         if len(self.Email) < 10:
-            Domoticz.Log("Phone number too short")
-            WriteDebug("Phone number too short")
+            Domoticz.Log("Email address too short")
+            WriteDebug("Email address too short")
 
         if len(self.Password) < 4:
             Domoticz.Log("Password too short")
@@ -85,10 +77,7 @@ class BasePlugin:
             self.ImageID = Images["MEATERLink"].ID
 
         self.GetToken = Domoticz.Connection(Name="Get Token", Transport="TCP/IP", Protocol="HTTPS", Address="public-api.cloud.meater.com", Port="443")
-#        self.GetRefreshToken = Domoticz.Connection(Name="Get Refrsh Token", Transport="TCP/IP", Protocol="HTTPS", Address="api.easee.cloud", Port="443")
-#        self.GetState = Domoticz.Connection(Name="Get State", Transport="TCP/IP", Protocol="HTTPS", Address="api.easee.cloud", Port="443")
         self.GetDevices = Domoticz.Connection(Name="Get Devices", Transport="TCP/IP", Protocol="HTTPS", Address="public-api.cloud.meater.com", Port="443")
-#        self.GetConfig = Domoticz.Connection(Name="Get Config", Transport="TCP/IP", Protocol="HTTPS", Address="api.easee.cloud", Port="443")
         self.GetToken.Connect()
 
     def onDisconnect(self, Connection):
@@ -103,26 +92,10 @@ class BasePlugin:
                 headers = { 'accept': 'application/json', 'Host': 'public-api.cloud.meater.com', 'Content-Type': 'application/json'}
                 Connection.Send({'Verb':'POST', 'URL': '/v1/login', 'Headers': headers, 'Data': data})
 
-            elif Connection.Name == ("Get Refresh Token"):
-                WriteDebug("Get Refresh Token")
-                data = "{\"accessToken\":\""+self.Token+"\",\"refreshToken\":\""+self.RefreshToken+"\"}"
-                headers = { 'Host': 'api.easee.cloud', 'Content-Type': 'application/json'}
-                Connection.Send({'Verb':'POST', 'URL': '/api/accounts/refresh_token', 'Headers': headers, 'Data': data})
-
             elif Connection.Name == ("Get Devices"):
                 WriteDebug("Get Devices")
                 headers = { 'Host': 'public-api.cloud.meater.com', 'Authorization': 'Bearer '+self.token}
                 Connection.Send({'Verb':'GET', 'URL': '/v1/devices', 'Headers': headers, 'Data': {} })
-
-            elif Connection.Name == ("Get State"):
-                WriteDebug("Get State")
-                headers = { 'Host': 'api.easee.cloud', 'Authorization': 'Bearer '+self.token}
-                Connection.Send({'Verb':'GET', 'URL': '/api/chargers/'+self.Charger+'/state', 'Headers': headers, 'Data': {} })
-
-            elif Connection.Name == ("Get Config"):
-                WriteDebug("Get Config")
-                headers = { 'Host': 'api.easee.cloud', 'Authorization': 'Bearer '+self.token}
-                Connection.Send({'Verb':'GET', 'URL': '/api/chargers/'+self.Charger+'/config', 'Headers': headers, 'Data': {} })
 
     def onMessage(self, Connection, Data):
         Status = int(Data["Status"])
@@ -132,19 +105,9 @@ class BasePlugin:
             if Connection.Name == ("Get Token"):
                 Data = Data['Data'].decode('UTF-8')
                 Data = json.loads(Data)
-#                Domoticz.Log(str(Data))
                 self.token = Data["data"]["token"]
-#                Domoticz.Log(str(self.token))
-#                self.refreshtoken = Data["refreshToken"]
                 self.GetToken.Disconnect()
                 self.GetDevices.Connect()
-
-            elif Connection.Name == ("Get Refresh Token"):
-                Data = Data['Data'].decode('UTF-8')
-                Data = json.loads(Data)
-                self.token = Data["accessToken"]
-                self.refreshtoken = Data["refreshToken"]
-                self.GetState.Connect()
 
             elif Connection.Name == ("Get Devices"):
                 Data = Data['Data'].decode('UTF-8')
@@ -161,37 +124,8 @@ class BasePlugin:
                         UpdateDevice("Probe "+str(count+1)+" cook", self.Devices[count]["cook"]["name"], count+3)
                         UpdateDevice("Probe "+str(count+1)+" temp target", self.Devices[count]["cook"]["temperature"]["target"], count+4)
                         UpdateDevice("Probe "+str(count+1)+" time left", self.Devices[count]["cook"]["time"]["remaining"], count+5)
-#                        UpdateDevice("Probe "+str(count+1)+" cook", self.Devices[count]["cook"]["name"], count+6)
                     count += 1
-
-
-
-#                    Domoticz.Log(str(each))
-#                    for each,data in each.items():
-#                        Domoticz.Log(str(each))
-#                        Domoticz.Log(str(data))
                 self.GetDevices.Disconnect()
-#                self.GetState.Connect()
-
-            elif Connection.Name == ("Get State"):
-                Data = Data['Data'].decode('UTF-8')
-                Data = json.loads(Data)
-                for name,value in Data.items():
-                    UpdateDevice(name, 0, str(value))
-                Domoticz.Log("State updated")
-                self.GetState.Disconnect()
-                self.GetConfig.Connect()
-
-            elif Connection.Name == ("Get Config"):
-                Data = Data['Data'].decode('UTF-8')
-                Data = json.loads(Data)
-                for name,value in Data.items():
-                    UpdateDevice(name, 0, str(value))
-                Domoticz.Log("Config updated")
-                self.GetConfig.Disconnect()
-
-        elif Status == 401:
-            self.GetRefreshToken.Connect()
 
         else:
             WriteDebug("Status = "+str(Status))
@@ -199,8 +133,8 @@ class BasePlugin:
             Domoticz.Error(str(Data))
             if _plugin.GetToken.Connected():
                 _plugin.GetToken.Disconnect()
-            if _plugin.GetState.Connected():
-                _plugin.GetState.Disconnect()
+            if _plugin.GetDevices.Connected():
+                _plugin.GetDevices.Disconnect()
 
     def onHeartbeat(self):
         self.Count += 1
@@ -248,12 +182,6 @@ def CheckInternet():
     except:
         if _plugin.GetToken.Connected() or _plugin.GetToken.Connecting():
             _plugin.GetToken.Disconnect()
-#        if _plugin.GetState.Connected() or _plugin.GetState.Connecting():
-#            _plugin.GetState.Disconnect()
-#        if _plugin.GetConfig.Connected() or _plugin.GetConfig.Connecting():
-#            _plugin.GetConfig.Disconnect()
-#        if _plugin.GetRefreshToken.Connected() or _plugin.GetRefreshToken.Connecting():
-#            _plugin.GetRefreshToken.Disconnect()
         if _plugin.GetDevices.Connected() or _plugin.GetDevices.Connecting():
             _plugin.GetDevices.Disconnect()
 
