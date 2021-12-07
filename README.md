@@ -1,5 +1,5 @@
 
-# MEATERLink-Domoticz
+# MEATERCloud-Domoticz
 
 Still under developing, please create an issue for all errors that you get.
 If you have any ideas or missing something please create an issue.
@@ -14,4 +14,4 @@ Easiest way is to use Git command in domoticz/plugin folder
 
 sudo git clone https://github.com/flopp999/MEATERLink-Domoticz/
 
-![](./MEATERLink.png "Photo")
+![](./MEATERCloud.png "Photo")
