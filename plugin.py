@@ -1,9 +1,9 @@
-# MEATER Link Python Plugin
+# MEATER Cloud Python Plugin
 #
 # Author: flopp999
 #
 """
-<plugin key="MEATERLink" name="MEATER Link 0.15" author="flopp999" version="0.15" wikilink="https://github.com/flopp999/MEATERLink-Domoticz" externallink="https://meater.com/">
+<plugin key="MEATERCloud" name="MEATER Cloud 0.15" author="flopp999" version="0.15" wikilink="https://github.com/flopp999/MEATERCloud-Domoticz" externallink="https://meater.com/">
     <description>
         <h2>Support me with a coffee &<a href="https://www.buymeacoffee.com/flopp999">https://www.buymeacoffee.com/flopp999</a></h2><br/>
         <h2>https://meater.com/blog/with-meater-link-the-best-wireless-meat-thermometer-gets-even-better-thanks-to-wifi-connectivity/</h2>
@@ -11,7 +11,7 @@
     <params>
         <param field="Mode1" label="Email address" width="320px" required="true" default="user@mail.com"/>
         <param field="Mode2" label="Password" width="350px" password="true" required="true" default="Password"/>
-        <param field="Mode6" label="Debug to file (MEATERLink.log)" width="70px">
+        <param field="Mode6" label="Debug to file (MEATERCloud.log)" width="70px">
             <options>
                 <option label="Yes" value="Yes" />
                 <option label="No" value="No" />
@@ -41,9 +41,9 @@ except ImportError as e:
     Package = False
 
 dir = os.path.dirname(os.path.realpath(__file__))
-logger = logging.getLogger("MEATERLink")
+logger = logging.getLogger("MEATERCloud")
 logger.setLevel(logging.INFO)
-handler = RotatingFileHandler(dir+'/MEATERLink.log', maxBytes=1000000, backupCount=5)
+handler = RotatingFileHandler(dir+'/MEATERCloud.log', maxBytes=1000000, backupCount=5)
 logger.addHandler(handler)
 
 class BasePlugin:
@@ -71,14 +71,14 @@ class BasePlugin:
             Domoticz.Log("Password too short")
             WriteDebug("Password too short")
 
-        if os.path.isfile(dir+'/MEATERLink.zip'):
-            if 'MEATERLink' not in Images:
-                Domoticz.Image('MEATERLink.zip').Create()
-            self.ImageID = Images["MEATERLink"].ID
-        if os.path.isfile(dir+'/MEATERLinkBeef.zip'):
-            if 'MEATERLinkBeef' not in Images:
-                Domoticz.Image('MEATERLinkBeef.zip').Create()
-            self.ImageIDBeef = Images["MEATERLinkBeef"].ID
+        if os.path.isfile(dir+'/MEATERCloud.zip'):
+            if 'MEATERCloud' not in Images:
+                Domoticz.Image('MEATERCloud.zip').Create()
+            self.ImageID = Images["MEATERCloud"].ID
+        if os.path.isfile(dir+'/MEATERCloudBeef.zip'):
+            if 'MEATERCloudBeef' not in Images:
+                Domoticz.Image('MEATERCloudBeef.zip').Create()
+            self.ImageIDBeef = Images["MEATERCloudBeef"].ID
 
         self.GetToken = Domoticz.Connection(Name="Get Token", Transport="TCP/IP", Protocol="HTTPS", Address="public-api.cloud.meater.com", Port="443")
         self.GetDevices = Domoticz.Connection(Name="Get Devices", Transport="TCP/IP", Protocol="HTTPS", Address="public-api.cloud.meater.com", Port="443")
@@ -120,9 +120,9 @@ class BasePlugin:
                 self.Devices = Data["data"]["devices"]
                 count = 0
                 while count < len(self.Devices):
-                    UpdateDevice("Probe "+str(count+1)+" temp int", self.Devices[count]["temperature"]["internal"], count+1, self.ImageID)
-                    UpdateDevice("Probe "+str(count+1)+" temp amb", self.Devices[count]["temperature"]["ambient"], count+2, self.ImageID)
                     if self.Devices[count]["cook"] == None:
+                        UpdateDevice("Probe "+str(count+1)+" temp int", self.Devices[count]["temperature"]["internal"], count+1, self.ImageID)
+                        UpdateDevice("Probe "+str(count+1)+" temp amb", self.Devices[count]["temperature"]["ambient"], count+2, self.ImageID)
                         UpdateDevice("Probe "+str(count+1)+" cook", "Not selected", count+3, self.ImageID)
                     elif self.Devices[count]["cook"]["name"] == "Tomahawk Steak":
                             UpdateDevice("Probe "+str(count+1)+" temp int", self.Devices[count]["temperature"]["internal"], count+1, self.ImageIDBeef)
