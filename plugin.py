@@ -3,7 +3,7 @@
 # Author: flopp999
 #
 """
-<plugin key="MEATERLink" name="MEATER Link 0.1" author="flopp999" version="0.1" wikilink="https://github.com/flopp999/MEATERLink-Domoticz" externallink="https://meater.com/">
+<plugin key="MEATERLink" name="MEATER Link 0.15" author="flopp999" version="0.15" wikilink="https://github.com/flopp999/MEATERLink-Domoticz" externallink="https://meater.com/">
     <description>
         <h2>Support me with a coffee &<a href="https://www.buymeacoffee.com/flopp999">https://www.buymeacoffee.com/flopp999</a></h2><br/>
         <h2>https://meater.com/blog/with-meater-link-the-best-wireless-meat-thermometer-gets-even-better-thanks-to-wifi-connectivity/</h2>
@@ -75,6 +75,10 @@ class BasePlugin:
             if 'MEATERLink' not in Images:
                 Domoticz.Image('MEATERLink.zip').Create()
             self.ImageID = Images["MEATERLink"].ID
+        if os.path.isfile(dir+'/MEATERLinkBeef.zip'):
+            if 'MEATERLinkBeef' not in Images:
+                Domoticz.Image('MEATERLinkBeef.zip').Create()
+            self.ImageIDBeef = Images["MEATERLinkBeef"].ID
 
         self.GetToken = Domoticz.Connection(Name="Get Token", Transport="TCP/IP", Protocol="HTTPS", Address="public-api.cloud.meater.com", Port="443")
         self.GetDevices = Domoticz.Connection(Name="Get Devices", Transport="TCP/IP", Protocol="HTTPS", Address="public-api.cloud.meater.com", Port="443")
@@ -112,18 +116,22 @@ class BasePlugin:
             elif Connection.Name == ("Get Devices"):
                 Data = Data['Data'].decode('UTF-8')
                 Data = json.loads(Data)
-                Domoticz.Log(str(Data["data"]["devices"]))
+#                Domoticz.Log(str(Data["data"]["devices"]))
                 self.Devices = Data["data"]["devices"]
                 count = 0
                 while count < len(self.Devices):
-                    UpdateDevice("Probe "+str(count+1)+" temp int", self.Devices[count]["temperature"]["internal"], count+1)
-                    UpdateDevice("Probe "+str(count+1)+" temp amb", self.Devices[count]["temperature"]["ambient"], count+2)
+                    UpdateDevice("Probe "+str(count+1)+" temp int", self.Devices[count]["temperature"]["internal"], count+1, self.ImageID)
+                    UpdateDevice("Probe "+str(count+1)+" temp amb", self.Devices[count]["temperature"]["ambient"], count+2, self.ImageID)
                     if self.Devices[count]["cook"] == None:
-                        UpdateDevice("Probe "+str(count+1)+" cook", "Not selected", count+3)
+                        UpdateDevice("Probe "+str(count+1)+" cook", "Not selected", count+3, self.ImageID)
+                    elif self.Devices[count]["cook"]["name"] == "Tomahawk Steak":
+                            UpdateDevice("Probe "+str(count+1)+" temp int", self.Devices[count]["temperature"]["internal"], count+1, self.ImageIDBeef)
+                            UpdateDevice("Probe "+str(count+1)+" temp amb", self.Devices[count]["temperature"]["ambient"], count+2, self.ImageIDBeef)
+                            UpdateDevice("Probe "+str(count+1)+" cook", self.Devices[count]["cook"]["name"], count+3, self.ImageIDBeef)
+                            UpdateDevice("Probe "+str(count+1)+" temp target", self.Devices[count]["cook"]["temperature"]["target"], count+4, self.ImageIDBeef)
+                            UpdateDevice("Probe "+str(count+1)+" time left", self.Devices[count]["cook"]["time"]["remaining"], count+5, self.ImageIDBeef)
                     else:
-                        UpdateDevice("Probe "+str(count+1)+" cook", self.Devices[count]["cook"]["name"], count+3)
-                        UpdateDevice("Probe "+str(count+1)+" temp target", self.Devices[count]["cook"]["temperature"]["target"], count+4)
-                        UpdateDevice("Probe "+str(count+1)+" time left", self.Devices[count]["cook"]["time"]["remaining"], count+5)
+                        Domoticz.Error("Please create an issue at github and write this error. Missing "+str(self.Devices[count]["cook"]["name"]))
                     count += 1
                 self.GetDevices.Disconnect()
 
@@ -138,7 +146,7 @@ class BasePlugin:
 
     def onHeartbeat(self):
         self.Count += 1
-        if self.Count == 12:
+        if self.Count == 6 :
             self.GetToken.Connect()
             self.Count = 0
 
@@ -149,27 +157,21 @@ def onStart():
     global _plugin
     _plugin.onStart()
 
-def UpdateDevice(name, sValue, ID):
-
-#    else:
-#        Domoticz.Error(str(name))
-#        return
+def UpdateDevice(name, sValue, ID, ImageID):
 
     if (ID in Devices):
         if (Devices[ID].sValue != sValue):
-            Devices[ID].Update(0, str(sValue))
+            Devices[ID].Update(0, str(sValue), Image=int(ImageID))
 
     if (ID not in Devices):
         if sValue == "-32768":
             Used = 0
         else:
             Used = 1
-        if ID == 3 or ID == 13:
-            Domoticz.Device(Name=name, Unit=ID, TypeName="Text", Used=1).Create()
-        if ID == 5 or ID == 15:
-            Domoticz.Device(Name=name, Unit=ID, TypeName="Text", Used=1).Create()
+        if ID == 3 or ID == 13 or ID == 5 or ID == 15:
+            Domoticz.Device(Name=name, Unit=ID, Image=int(ImageID), TypeName="Text", Used=1).Create()
         else:
-            Domoticz.Device(Name=name, Unit=ID, TypeName="Temperature", Used=Used, Description="ParameterID=\nDesignation=").Create()
+            Domoticz.Device(Name=name, Unit=ID, Image=int(ImageID), TypeName="Temperature", Used=Used, Description="ParameterID=\nDesignation=").Create()
         Devices[ID].Update(0, str(sValue), Name=name)
 
 def CheckInternet():
