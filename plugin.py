@@ -118,7 +118,7 @@ class BasePlugin:
                 Data = json.loads(Data)
 #                Domoticz.Log(str(Data["data"]["devices"]))
                 self.Devices = Data["data"]["devices"]
-                count = 0
+                count = 1
                 while count < len(self.Devices):
                     if self.Devices[count]["cook"] == None:
                         UpdateDevice("Probe "+str(count+1)+" temp int", self.Devices[count]["temperature"]["internal"], count+1, self.ImageID)
@@ -132,6 +132,7 @@ class BasePlugin:
                             UpdateDevice("Probe "+str(count+1)+" time left", self.Devices[count]["cook"]["time"]["remaining"], count+5, self.ImageIDBeef)
                     else:
                         Domoticz.Error("Please create an issue at github and write this error. Missing "+str(self.Devices[count]["cook"]["name"]))
+#                    Domoticz.Log(str("Probe ")+str(count)+str(" updated"))
                     count += 1
                 self.GetDevices.Disconnect()
 
