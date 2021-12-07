@@ -1,6 +1,8 @@
 
 # MEATERLink-Domoticz
 
+Still under developing
+
 This plugin is getting data from MEATER Cloud, https://support.meater.com/faqs/setting-up-meater-cloud
 
 To use this plugin you need to download the files.
