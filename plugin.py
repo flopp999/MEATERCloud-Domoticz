@@ -3,10 +3,11 @@
 # Author: flopp999
 #
 """
-<plugin key="MEATERCloud" name="MEATER Cloud 0.15" author="flopp999" version="0.15" wikilink="https://github.com/flopp999/MEATERCloud-Domoticz" externallink="https://meater.com/">
+<plugin key="MEATERCloud" name="MEATER Cloud 0.16" author="flopp999" version="0.16" wikilink="https://github.com/flopp999/MEATERCloud-Domoticz" externallink="https://meater.com/">
     <description>
         <h2>Support me with a coffee &<a href="https://www.buymeacoffee.com/flopp999">https://www.buymeacoffee.com/flopp999</a></h2><br/>
-        <h2>https://meater.com/blog/with-meater-link-the-best-wireless-meat-thermometer-gets-even-better-thanks-to-wifi-connectivity/</h2>
+        <h2>Information about MEATER Cloud &<a href="https://support.meater.com/faqs/setting-up-meater-cloud">https://support.meater.com/faqs/setting-up-meater-cloud</a></h2>
+        <br/>
     </description>
     <params>
         <param field="Mode1" label="Email address" width="320px" required="true" default="user@mail.com"/>
@@ -59,8 +60,6 @@ class BasePlugin:
         WriteDebug("===onStart===")
         self.Email = Parameters["Mode1"]
         self.Password = Parameters["Mode2"]
-        self.Charger = 0
-        self.NoOfSystems = ""
         self.FirstRun = True
 
         if len(self.Email) < 10:
@@ -118,22 +117,29 @@ class BasePlugin:
                 Data = json.loads(Data)
 #                Domoticz.Log(str(Data["data"]["devices"]))
                 self.Devices = Data["data"]["devices"]
-                count = 1
+                count = 0
                 while count < len(self.Devices):
                     if self.Devices[count]["cook"] == None:
                         UpdateDevice("Probe "+str(count+1)+" temp int", self.Devices[count]["temperature"]["internal"], count+1, self.ImageID)
                         UpdateDevice("Probe "+str(count+1)+" temp amb", self.Devices[count]["temperature"]["ambient"], count+2, self.ImageID)
                         UpdateDevice("Probe "+str(count+1)+" cook", "Not selected", count+3, self.ImageID)
                     elif self.Devices[count]["cook"]["name"] == "Tomahawk Steak":
-                            UpdateDevice("Probe "+str(count+1)+" temp int", self.Devices[count]["temperature"]["internal"], count+1, self.ImageIDBeef)
-                            UpdateDevice("Probe "+str(count+1)+" temp amb", self.Devices[count]["temperature"]["ambient"], count+2, self.ImageIDBeef)
-                            UpdateDevice("Probe "+str(count+1)+" cook", self.Devices[count]["cook"]["name"], count+3, self.ImageIDBeef)
-                            UpdateDevice("Probe "+str(count+1)+" temp target", self.Devices[count]["cook"]["temperature"]["target"], count+4, self.ImageIDBeef)
-                            UpdateDevice("Probe "+str(count+1)+" time left", self.Devices[count]["cook"]["time"]["remaining"], count+5, self.ImageIDBeef)
+                        UpdateDevice("Probe "+str(count+1)+" temp int", self.Devices[count]["temperature"]["internal"], count+1, self.ImageIDBeef)
+                        UpdateDevice("Probe "+str(count+1)+" temp amb", self.Devices[count]["temperature"]["ambient"], count+2, self.ImageIDBeef)
+                        UpdateDevice("Probe "+str(count+1)+" cook", self.Devices[count]["cook"]["name"], count+3, self.ImageIDBeef)
+                        UpdateDevice("Probe "+str(count+1)+" temp target", self.Devices[count]["cook"]["temperature"]["target"], count+4, self.ImageIDBeef)
+                        UpdateDevice("Probe "+str(count+1)+" time left", self.Devices[count]["cook"]["time"]["remaining"], count+5, self.ImageIDBeef)
                     else:
-                        Domoticz.Error("Please create an issue at github and write this error. Missing "+str(self.Devices[count]["cook"]["name"]))
-#                    Domoticz.Log(str("Probe ")+str(count)+str(" updated"))
+                        UpdateDevice("Probe "+str(count+1)+" temp int", self.Devices[count]["temperature"]["internal"], count+1, self.ImageID)
+                        UpdateDevice("Probe "+str(count+1)+" temp amb", self.Devices[count]["temperature"]["ambient"], count+2, self.ImageID)
+                        UpdateDevice("Probe "+str(count+1)+" cook", self.Devices[count]["cook"]["name"], count+3, self.ImageID)
+                        UpdateDevice("Probe "+str(count+1)+" temp target", self.Devices[count]["cook"]["temperature"]["target"], count+4, self.ImageID)
+                        UpdateDevice("Probe "+str(count+1)+" time left", self.Devices[count]["cook"]["time"]["remaining"], count+5, self.ImageID)
+                        if self.FirstRun == True:
+                            Domoticz.Error("Please create an issue at github and write this error. Missing "+str(self.Devices[count]["cook"]["name"]))
                     count += 1
+                Domoticz.Log("Probe/s updated")
+                self.FirstRun = False
                 self.GetDevices.Disconnect()
 
         else:
